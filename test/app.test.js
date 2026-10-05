@@ -2,15 +2,29 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { app, calculateTotal } = require("../src/app");
 
-async function get(path) {
+async function request(path, options = {}) {
   const server = app.listen(0);
 
   try {
     const { port } = server.address();
-    return await fetch(`http://127.0.0.1:${port}${path}`);
+    return await fetch(`http://127.0.0.1:${port}${path}`, options);
   } finally {
     server.close();
   }
+}
+
+async function get(path) {
+  return request(path);
+}
+
+async function post(path, body) {
+  return request(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
 }
 
 test("calculates the total for several items", () => {
@@ -48,4 +62,31 @@ test("returns all tasks", async () => {
     assert.equal(typeof task.title, "string");
     assert.equal(typeof task.completed, "boolean");
   }
+});
+
+test("creates a task", async () => {
+  const response = await post("/tasks", { title: "Write CI notes" });
+  const body = await response.json();
+
+  assert.equal(response.status, 201);
+  assert.equal(typeof body.id, "number");
+  assert.equal(body.title, "Write CI notes");
+  assert.equal(body.completed, false);
+});
+
+test("generates a unique ID for each new task", async () => {
+  const firstResponse = await post("/tasks", { title: "First task" });
+  const secondResponse = await post("/tasks", { title: "Second task" });
+  const firstTask = await firstResponse.json();
+  const secondTask = await secondResponse.json();
+
+  assert.notEqual(firstTask.id, secondTask.id);
+});
+
+test("rejects an empty task title", async () => {
+  const response = await post("/tasks", { title: "   " });
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, "Task title is required");
 });
