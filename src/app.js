@@ -3,6 +3,10 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 
+const tasks = [
+  { id: 1, title: "Review challenge brief", completed: false }
+];
+
 function calculateTotal(items) {
   return items.reduce((total, item) => total + item.price * item.quantity, 0);
 }
@@ -16,6 +20,10 @@ app.get("/", (_req, res) => {
 
 app.get("/health", (_req, res) => {
   res.json({ status: "healthy" });
+});
+
+app.get("/tasks", (_req, res) => {
+  res.json(tasks);
 });
 
 app.get("/total", (_req, res) => {
@@ -33,4 +41,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, calculateTotal };
+module.exports = { app, calculateTotal, tasks };
