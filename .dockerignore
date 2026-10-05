@@ -1,0 +1,9 @@
+node_modules
+.git
+.github
+coverage
+*.log
+.env
+.env.*
+terraform
+test
